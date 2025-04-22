@@ -15,9 +15,15 @@ app.use((req, res, next) => {
 });
 
 app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true
+  origin: [
+    'https://ai-apps-alpha.vercel.app',
+    'http://localhost:3000',
+    'https://ai-apps-production.up.railway.app',
+    'https://ai-apps-frontend.vercel.app' // Add production frontend URL
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  maxAge: 86400 // 24-hour preflight cache
 }));
 
 app.use(express.json());
@@ -37,7 +43,8 @@ app.get('/', (req, res) => {
       message: 'Welcome to AI Apps API',
       status: 'running',
       version: '1.0.0',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      frontend: 'https://ai-apps-alpha.vercel.app'
     });
   } catch (error) {
     console.error('Root endpoint error:', error);
@@ -83,6 +90,16 @@ app.use((req, res) => {
     method: req.method 
   });
 });
+
+app.disable('x-powered-by');
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      connectSrc: ["'self'", "https://ai-apps-production.up.railway.app"]
+    }
+  }
+}));
 
 const server = app.listen(port, '0.0.0.0', () => {
   console.log(`Server running on port ${port}`);
